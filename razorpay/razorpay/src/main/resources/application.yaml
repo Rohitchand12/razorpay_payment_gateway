@@ -1,3 +1,11 @@
 spring:
   application:
     name: razorpay
+  datasource:
+    url: jdbc:postgresql://localhost:5433/razorpayDB
+    username: postgres
+    password: Programmer@0520
+  jpa:
+    hibernate:
+      ddl-auto: create
+    show-sql: true
