@@ -1,10 +1,13 @@
 package com.rohit.razorpay.payment.entity;
 
 import com.rohit.razorpay.common.entity.Money;
-import com.rohit.razorpay.common.enums.PaymentStatus;
+import com.rohit.razorpay.common.enums.RefundStatus;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 @Entity
@@ -26,7 +29,11 @@ public class RefundEntity {
     private Money amount;
 
     @Enumerated(EnumType.STRING)
-    private PaymentStatus status;
+    private RefundStatus status;
+
+    @JdbcTypeCode(SqlTypes.JSON) // Hibernate should treat this as JSON
+    @Column(columnDefinition = "jsonb") // PostgreSQL jsonb column
+    private Map<String, Object> notes;
 
     private String bankReference;
 

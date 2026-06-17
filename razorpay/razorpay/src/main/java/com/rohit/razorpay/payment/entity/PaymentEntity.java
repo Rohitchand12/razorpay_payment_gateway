@@ -30,6 +30,10 @@ public class PaymentEntity {
     private String idempotencyKey;
 
     @Embedded // Embeds Money fields directly into payment table
+    @AttributeOverrides({
+            @AttributeOverride(name="amountUnits",column=@Column(name = "payment_amount_units")),
+            @AttributeOverride(name="currency",column=@Column(name = "payment_amount_currency")),
+    })
     private Money amount;
 
     @Enumerated(EnumType.STRING)
@@ -51,6 +55,11 @@ public class PaymentEntity {
     // Human-readable error message
     private String errorDescription;
 
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name="amountUnits",column=@Column(name = "refund_amount_units")),
+            @AttributeOverride(name="currency",column=@Column(name = "refund_amount_currency")),
+    })
     private Money refundAmount;
 
     // When payment was captured from customer
