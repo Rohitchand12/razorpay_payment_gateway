@@ -8,9 +8,9 @@ public class SettlementPaymentEntity {
     @EmbeddedId
     private SettlementPaymentId id; // to create a composite key.
 
-    @MapsId()
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "settlement_id")
-    private SettlementEntity settlement;
+//    @MapsId()
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "settlement_id")
+//    private SettlementEntity settlement;
 
 }

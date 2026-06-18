@@ -2,10 +2,7 @@ package com.rohit.razorpay.merchant.entity;
 
 import com.rohit.razorpay.common.enums.UserRole;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.UUID;
 
@@ -15,6 +12,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class AppUserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

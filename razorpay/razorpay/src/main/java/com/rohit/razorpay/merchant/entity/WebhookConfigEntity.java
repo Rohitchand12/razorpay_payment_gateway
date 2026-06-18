@@ -1,11 +1,17 @@
 package com.rohit.razorpay.merchant.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 import java.util.UUID;
 
 @Entity
 @Table(name = "webhook_config")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class WebhookConfigEntity {
 
     @Id
