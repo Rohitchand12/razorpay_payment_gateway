@@ -14,7 +14,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ApiKey {
+public class ApiKeyEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -25,18 +25,22 @@ public class ApiKey {
     private MerchantEntity merchant;
 
     @Column(unique = true, nullable = false,length = 50)
-    private String key_id;
+    private String keyId;
 
     @Column(nullable = false,length = 200)
     private String keySecretHash;
 
-    @Column(nullable = false,length = 200)
+    @Column(length = 200)
+    private String prevKeySecretHash;
+
+    @Column(length = 200)
     private String webhookSecretHash;
 
     @Enumerated(EnumType.STRING)
     private Environment environment;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean enabled = true;
 
     private LocalDateTime lastUsedAt;
