@@ -1,5 +1,6 @@
 package com.rohit.razorpay.merchant.entity;
 
+import com.rohit.razorpay.common.entity.BaseEntity;
 import com.rohit.razorpay.common.enums.BusinessType;
 import com.rohit.razorpay.common.enums.MerchantStatus;
 import jakarta.persistence.*;
@@ -8,13 +9,15 @@ import lombok.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "merchant")
+@Table(name = "merchant", indexes = {
+        @Index(name="idx_merchant_status",columnList = "merchant_status")
+})
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class MerchantEntity {
+public class MerchantEntity extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;

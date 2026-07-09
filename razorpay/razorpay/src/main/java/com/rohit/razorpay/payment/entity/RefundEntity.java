@@ -1,5 +1,6 @@
 package com.rohit.razorpay.payment.entity;
 
+import com.rohit.razorpay.common.entity.BaseEntity;
 import com.rohit.razorpay.common.entity.Money;
 import com.rohit.razorpay.common.enums.RefundStatus;
 import jakarta.persistence.*;
@@ -12,7 +13,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "refund")
-public class RefundEntity {
+public class RefundEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

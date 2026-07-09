@@ -1,9 +1,11 @@
 package com.rohit.razorpay.payment.entity;
+import com.rohit.razorpay.common.entity.BaseEntity;
 import com.rohit.razorpay.common.entity.Money;
 import com.rohit.razorpay.common.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -12,10 +14,14 @@ import java.util.Map;
 import java.util.UUID;
 
 @Entity
-@Table(name="order_record")
+@Table(name="order_record", indexes = {
+        @Index(name = "idx_order_id_merchant_id",columnList = "id,merchant_id"),
+        @Index(name="idx_order_merchant_id",columnList = "merchant_id")
+})
 @Getter
+@Setter
 @Builder
-public class OrderRecordEntity {
+public class OrderRecordEntity extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;

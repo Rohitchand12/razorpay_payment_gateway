@@ -1,16 +1,13 @@
 package com.rohit.razorpay.payment.controller;
 
 import com.rohit.razorpay.payment.dto.request.OrderCreateRequestDto;
-import com.rohit.razorpay.payment.dto.response.OrderCreateResponseDto;
+import com.rohit.razorpay.payment.dto.response.OrderResponseDto;
 import com.rohit.razorpay.payment.service.impl.OrderServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -23,8 +20,19 @@ public class OrderController {
     UUID merchantId = UUID.fromString("839acca4-7ca1-4efb-ba29-9726e9048651");
 
     @PostMapping()
-    public ResponseEntity<OrderCreateResponseDto> create(@RequestBody @Valid  OrderCreateRequestDto request){
+    public ResponseEntity<OrderResponseDto> create(@RequestBody @Valid  OrderCreateRequestDto request){
         return ResponseEntity.status(HttpStatus.CREATED).body(orderService.create(merchantId,request));
     }
+
+    //get by id
+    @GetMapping("/{id}")
+    public ResponseEntity<OrderResponseDto> getById(@PathVariable UUID id){
+        return ResponseEntity.ok(orderService.getById(merchantId,id));
+    }
+
+    //cancel order
+
+
+    //list payments
 
 }

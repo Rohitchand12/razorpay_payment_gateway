@@ -1,5 +1,6 @@
 package com.rohit.razorpay.payment.entity;
 
+import com.rohit.razorpay.common.entity.BaseEntity;
 import com.rohit.razorpay.common.enums.PaymentActor;
 import com.rohit.razorpay.common.enums.PaymentEvent;
 import jakarta.persistence.*;
@@ -8,8 +9,10 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "payment_transition_log")
-public class PaymentTransitionLogEntity {
+@Table(name = "payment_transition_log", indexes = {
+        @Index(name = "idx_payment_transition_payment_id",columnList = "payment_id")
+})
+public class PaymentTransitionLogEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

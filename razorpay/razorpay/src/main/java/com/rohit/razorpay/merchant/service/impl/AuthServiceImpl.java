@@ -7,6 +7,7 @@ import com.rohit.razorpay.merchant.dto.request.MerchantSignupRequestDto;
 import com.rohit.razorpay.merchant.dto.response.MerchantResponseDto;
 import com.rohit.razorpay.merchant.entity.AppUserEntity;
 import com.rohit.razorpay.merchant.entity.MerchantEntity;
+import com.rohit.razorpay.merchant.mapper.MerchantMapper;
 import com.rohit.razorpay.merchant.repository.AppUserRepository;
 import com.rohit.razorpay.merchant.repository.MerchantRepository;
 import com.rohit.razorpay.merchant.service.AuthService;
@@ -22,6 +23,7 @@ public class AuthServiceImpl implements AuthService {
 
     private final AppUserRepository appUserRepository;
     private final MerchantRepository merchantRepository;
+    private final MerchantMapper merchantMapper;
 
     @Override
     @Transactional
@@ -33,14 +35,8 @@ public class AuthServiceImpl implements AuthService {
         //BUSINESS LOGIC
 
         //Create a merchant
-        MerchantEntity merchant = MerchantEntity.builder()
-                .email(request.email())
-                .name(request.name())
-                .businessName(request.businessName())
-                .merchantStatus(MerchantStatus.PENDING_KYC)
-                .businessType(request.businessType())
-                .build();
-
+        MerchantEntity merchant = merchantMapper.fromSignupRequestToMerchantEntity(request);
+        merchant.setMerchantStatus(MerchantStatus.PENDING_KYC);
         merchant = merchantRepository.save(merchant);
 
         //Create an app user that is the main owner
@@ -53,13 +49,6 @@ public class AuthServiceImpl implements AuthService {
 
         appUserRepository.save(appUser);
 
-        return new MerchantResponseDto(
-                merchant.getId(),
-                merchant.getName(),
-                merchant.getEmail(),
-                merchant.getBusinessName(),
-                merchant.getBusinessType(),
-                merchant.getMerchantStatus()
-        ); //return a dto
+        return merchantMapper.toMerchantResponseDto(merchant); //return a dto
     }
 }

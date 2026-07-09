@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
-public record OrderCreateResponseDto(
+public record OrderResponseDto(
         UUID id,
         UUID merchantId,
         Money amount,

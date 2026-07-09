@@ -1,12 +1,13 @@
 package com.rohit.razorpay.vault.entity;
 
+import com.rohit.razorpay.common.entity.BaseEntity;
 import jakarta.persistence.*;
 
 import java.util.UUID;
 
 @Entity
 @Table(name = "card_token")
-public class CardTokenEntity {
+public class CardTokenEntity extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;

@@ -3,6 +3,7 @@ package com.rohit.razorpay.merchant.service.impl;
 import com.rohit.razorpay.common.enums.Environment;
 import com.rohit.razorpay.common.exceptions.ResourceNotFoundException;
 import com.rohit.razorpay.common.utils.RandomizerUtil;
+import com.rohit.razorpay.merchant.mapper.ApiKeyMapper;
 import com.rohit.razorpay.merchant.dto.request.ApiKeyRequestDto;
 import com.rohit.razorpay.merchant.dto.response.ApiKeyCreateResponseDto;
 import com.rohit.razorpay.merchant.dto.response.ApiKeyResponseDto;
@@ -28,6 +29,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
 
     private final ApiKeyRepository apiKeyRepository;
     private final MerchantRepository merchantRepository;
+    private final ApiKeyMapper apiKeyMapper;
 
     @Override
     @Transactional
@@ -51,7 +53,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
         return new ApiKeyCreateResponseDto(
                 apiKey.getId(),
                 apiKey.getKeyId(),
-                apiKey.getKeySecretHash(),
+                keySecret,
                 apiKey.getEnvironment()
         );
     }
@@ -63,16 +65,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
                 .orElseThrow(()->new ResourceNotFoundException("merchant",merchantId));
 
         List<ApiKeyEntity> apiKeyEntities = apiKeyRepository.findAllByMerchant_Id(merchantId);
-        return apiKeyEntities.stream()
-                .map((apiKeyEntity)-> new ApiKeyResponseDto(
-                         apiKeyEntity.getId()
-                        ,apiKeyEntity.getMerchant()
-                        ,apiKeyEntity.getKeyId()
-                        ,apiKeyEntity.getEnvironment()
-                        ,apiKeyEntity.getEnabled()
-                        ,apiKeyEntity.getLastUsedAt()
-                ))
-                .toList();
+        return apiKeyMapper.toApiKeyResponseDtoList(apiKeyEntities);
     }
 
     @Override
@@ -92,6 +85,8 @@ public class ApiKeyServiceImpl implements ApiKeyService {
                 .filter((key)->key.getMerchant().getId().equals(merchantId))
                 .orElseThrow(()->new ResourceNotFoundException("ApiKey",keyId));
 
+        if(!apiKey.getEnabled()) throw new RuntimeException("Key is disabled");
+
         String newRawSecret = RandomizerUtil.randomBase64(40);
         apiKey.setPrevKeySecretHash(apiKey.getKeySecretHash());
         apiKey.setKeySecretHash(newRawSecret);
@@ -102,7 +97,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
         return new ApiKeyCreateResponseDto(
                  apiKey.getId()
                 ,apiKey.getKeyId()
-                ,apiKey.getKeySecretHash()
+                ,newRawSecret
                 ,apiKey.getEnvironment()
         );
     }
