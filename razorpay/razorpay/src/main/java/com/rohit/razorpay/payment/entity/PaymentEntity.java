@@ -5,6 +5,7 @@ import com.rohit.razorpay.common.entity.Money;
 import com.rohit.razorpay.common.enums.PaymentMethod;
 import com.rohit.razorpay.common.enums.PaymentStatus;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -21,6 +22,7 @@ import java.util.UUID;
 })
 @Getter
 @Setter
+@Builder
 public class PaymentEntity extends BaseEntity {
 
     @Id
@@ -55,7 +57,11 @@ public class PaymentEntity extends BaseEntity {
     private Map<String, Object> methodDetails;
 
     // Reference returned by bank/payment gateway
+    @Column(length = 100)
     private String bankReference;
+
+    @Column(length = 100)
+    private String processorReference;
 
     // Gateway/bank error code
     private String errorCode;
