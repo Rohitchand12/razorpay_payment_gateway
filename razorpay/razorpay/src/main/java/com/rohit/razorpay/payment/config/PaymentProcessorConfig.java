@@ -1,10 +1,10 @@
 package com.rohit.razorpay.payment.config;
 
 import com.rohit.razorpay.common.enums.PaymentMethod;
-import com.rohit.razorpay.processor.PaymentProcessor;
-import com.rohit.razorpay.processor.strategies.CardPaymentProcessor;
-import com.rohit.razorpay.processor.strategies.NetBankingPaymentProcessor;
-import com.rohit.razorpay.processor.strategies.UpiPaymentProcessor;
+import com.rohit.razorpay.payment.processor.PaymentProcessor;
+import com.rohit.razorpay.payment.processor.strategies.CardPaymentProcessor;
+import com.rohit.razorpay.payment.processor.strategies.NetBankingPaymentProcessor;
+import com.rohit.razorpay.payment.processor.strategies.UpiPaymentProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

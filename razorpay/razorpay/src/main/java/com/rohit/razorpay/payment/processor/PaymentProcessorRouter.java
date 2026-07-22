@@ -1,8 +1,8 @@
-package com.rohit.razorpay.processor;
+package com.rohit.razorpay.payment.processor;
 
 import com.rohit.razorpay.common.enums.PaymentMethod;
-import com.rohit.razorpay.processor.dto.PaymentProcessorRequest;
-import com.rohit.razorpay.processor.dto.PaymentProcessorResponse;
+import com.rohit.razorpay.payment.processor.dto.PaymentProcessorRequest;
+import com.rohit.razorpay.payment.processor.dto.PaymentProcessorResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

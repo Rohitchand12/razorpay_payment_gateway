@@ -1,4 +1,4 @@
-package com.rohit.razorpay.processor.dto;
+package com.rohit.razorpay.payment.processor.dto;
 
 public sealed interface PaymentProcessorResponse permits
         PaymentProcessorResponse.pending,
