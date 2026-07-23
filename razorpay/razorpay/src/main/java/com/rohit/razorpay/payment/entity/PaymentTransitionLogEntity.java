@@ -4,6 +4,7 @@ import com.rohit.razorpay.common.entity.BaseEntity;
 import com.rohit.razorpay.common.enums.PaymentActor;
 import com.rohit.razorpay.common.enums.PaymentEvent;
 import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -12,6 +13,11 @@ import java.util.UUID;
 @Table(name = "payment_transition_log", indexes = {
         @Index(name = "idx_payment_transition_payment_id",columnList = "payment_id")
 })
+@Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class PaymentTransitionLogEntity extends BaseEntity {
 
     @Id
