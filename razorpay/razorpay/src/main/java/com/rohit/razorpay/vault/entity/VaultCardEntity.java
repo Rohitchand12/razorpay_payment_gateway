@@ -1,13 +1,20 @@
 package com.rohit.razorpay.vault.entity;
 
 import com.rohit.razorpay.common.entity.BaseEntity;
+import com.rohit.razorpay.common.enums.CardBrand;
 import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "vault_card")
+@Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class VaultCardEntity extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -23,7 +30,8 @@ public class VaultCardEntity extends BaseEntity {
     private String lastFour;
 
     @Column(nullable = false)
-    private String brand;
+    @Enumerated(EnumType.STRING)
+    private CardBrand brand;
 
     @Column(nullable = false,length = 6)
     private String bin; // first 6 digits of a card - bank identification number
