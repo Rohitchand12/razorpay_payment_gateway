@@ -7,9 +7,9 @@ import java.util.UUID;
 @Getter
 public class ResourceNotFoundException extends RuntimeException{
     private final String resource;
-    private final UUID resourceId;
+    private final Object resourceId;
 
-    public ResourceNotFoundException(String resource, UUID resourceId){
+    public ResourceNotFoundException(String resource, Object resourceId){
         super(resource + " not found with id: " +  resourceId);
         this.resourceId = resourceId;
         this.resource = resource;

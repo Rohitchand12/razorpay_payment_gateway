@@ -4,6 +4,7 @@ import com.rohit.razorpay.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -30,4 +31,6 @@ public class CardTokenEntity extends BaseEntity {
 
     @Column(nullable = false)
     private UUID merchantId;
+
+    private LocalDateTime revokedAt;
 }

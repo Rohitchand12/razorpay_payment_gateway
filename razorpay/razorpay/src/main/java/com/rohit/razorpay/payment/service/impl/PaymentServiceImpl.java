@@ -77,6 +77,10 @@ public class PaymentServiceImpl implements PaymentService {
                 request.paymentMethod(),
                 request.methodDetails()
         );
+
+        //attempted authorize
+        paymentTransitionService.apply(paymentEntity,PaymentEvent.AUTHORIZE_ATTEMPT);
+
         //make a payment initiate call to payment router.
         PaymentResult paymentResult = paymentGatewayRouter.initiate(paymentRequest);
         switch (paymentResult) {
