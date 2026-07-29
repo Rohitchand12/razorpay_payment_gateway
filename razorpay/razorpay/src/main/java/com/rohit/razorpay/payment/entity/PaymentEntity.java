@@ -5,9 +5,7 @@ import com.rohit.razorpay.common.entity.Money;
 import com.rohit.razorpay.common.enums.PaymentMethod;
 import com.rohit.razorpay.common.enums.PaymentStatus;
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -23,6 +21,8 @@ import java.util.UUID;
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PaymentEntity extends BaseEntity {
 
     @Id
@@ -78,6 +78,9 @@ public class PaymentEntity extends BaseEntity {
 
     // When payment was captured from customer
     private LocalDateTime capturedAt;
+
+    // When payment was authorized from the bank
+    private LocalDateTime authorizedAt;
 
     // When funds were settled to merchant
     private LocalDateTime settledAt;

@@ -40,7 +40,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public PaymentResponseDto initiate(UUID merchantId, PaymentInitRequestDto request) {
         //check if order exists with merchant id and order id
-        OrderRecordEntity order = orderRepository.findByIdAndMerchantId(merchantId,request.orderId())
+        OrderRecordEntity order = orderRepository.findByIdAndMerchantId(request.orderId(),merchantId)
                 .orElseThrow(()-> new ResourceNotFoundException(
                         "order", request.orderId())
                 );
@@ -120,5 +120,47 @@ public class PaymentServiceImpl implements PaymentService {
         payment = paymentRepository.save(payment);
         //send a Kafka event
         return paymentMapper.toPaymentResponseDto(payment);
+    }
+
+    @Override
+    @Transactional
+    public void resolveAuthorization(UUID paymentId, boolean approve, String bankRef, String errorCode, String errorDescription) {
+        PaymentEntity payment = paymentRepository.findById(paymentId)
+                .orElseThrow(()->new ResourceNotFoundException("Payment",paymentId));
+        if(payment.getStatus() != PaymentStatus.AUTHORIZING){
+            log.warn("Payment is not in authorizing state, payment id : {}, status : {}",paymentId,payment.getStatus());
+            return;
+        }
+        OrderRecordEntity orderRecord = payment.getOrder();
+        if(approve){
+            paymentTransitionService.apply(payment,PaymentEvent.AUTHORIZE_SUCCESS);
+            payment.setBankReference(bankRef);
+            payment.setAuthorizedAt(LocalDateTime.now());
+
+            //Auto capture
+            paymentTransitionService.apply(payment,PaymentEvent.CAPTURE_REQUEST);
+            PaymentResult captureResult =  paymentGatewayRouter.capture(payment.getMethod(),paymentId);
+            switch (captureResult){
+                case PaymentResult.success success -> {
+                    paymentTransitionService.apply(payment,PaymentEvent.CAPTURE_SUCCESS);
+                    payment.setCapturedAt(LocalDateTime.now());
+                    orderRecord.setStatus(OrderStatus.PAID);
+                }
+                case PaymentResult.failure failure->{
+                    paymentTransitionService.apply(payment,PaymentEvent.CAPTURE_FAIL);
+                    payment.setErrorCode(failure.errCode());
+                    payment.setErrorDescription(failure.errorDescription());
+                }
+                case PaymentResult.pending pending ->{
+                    //NO PENDING STATE due to synchronous nature, we will immediately get success or fail in capture
+                }
+            }
+        }else{
+            paymentTransitionService.apply(payment,PaymentEvent.AUTHORIZE_FAIL);
+            payment.setErrorDescription(errorDescription);
+            payment.setErrorCode(errorCode);
+        }
+        paymentRepository.save(payment);
+        orderRepository.save(orderRecord);
     }
 }

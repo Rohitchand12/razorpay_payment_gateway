@@ -1,9 +1,11 @@
 package com.rohit.razorpay.payment.repository;
 
+import com.rohit.razorpay.common.enums.PaymentStatus;
 import com.rohit.razorpay.payment.entity.PaymentEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -12,4 +14,6 @@ import java.util.UUID;
 public interface PaymentRepository extends JpaRepository<PaymentEntity,UUID> {
     List<PaymentEntity> findByOrder_Id(UUID merchantId, UUID orderId);
     Optional<PaymentEntity> findByIdAndMerchantId(UUID paymentId, UUID merchantId);
+
+    List<PaymentEntity> findByStatusAndCreatedAtBefore(PaymentStatus paymentStatus, LocalDateTime timeBefore);
 }

@@ -9,5 +9,5 @@ import java.util.UUID;
 
 public interface OrderRepository extends JpaRepository<OrderRecordEntity, UUID> {
     boolean existsByMerchantIdAndReceipt(UUID merchantId,String receipt);
-    Optional<OrderRecordEntity> findByIdAndMerchantId(UUID merchantId, UUID id);
+    Optional<OrderRecordEntity> findByIdAndMerchantId(UUID id,UUID merchantId);
 }

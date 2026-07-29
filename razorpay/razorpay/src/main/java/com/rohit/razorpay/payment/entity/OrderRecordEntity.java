@@ -3,9 +3,7 @@ import com.rohit.razorpay.common.entity.BaseEntity;
 import com.rohit.razorpay.common.entity.Money;
 import com.rohit.razorpay.common.enums.OrderStatus;
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -21,6 +19,8 @@ import java.util.UUID;
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class OrderRecordEntity extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
