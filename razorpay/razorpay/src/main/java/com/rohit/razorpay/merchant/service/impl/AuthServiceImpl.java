@@ -73,7 +73,7 @@ public class AuthServiceImpl implements AuthService {
         );
         AppUserEntity appUser = (AppUserEntity) appUserRepository.findByEmail(request.email())
                 .orElseThrow(()->new ResourceNotFoundException("AppUser", request.email()));
-        String accessToken = jwtUtil.generateAccessToken(request.email(),appUser.getId(),appUser.getRole());
+        String accessToken = jwtUtil.generateAccessToken(request.email(),appUser.getMerchant().getId(),appUser.getRole());
 
         return new LoginResponseDto(accessToken);
     }

@@ -1,5 +1,6 @@
 package com.rohit.razorpay.merchant.security;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -11,8 +12,10 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
+@RequiredArgsConstructor
 public class WebSecurityConfig {
 
     private static final String[] JWT_ROUTES = {
@@ -27,6 +30,8 @@ public class WebSecurityConfig {
             "/api/v1/vault/**",
     };
 
+    private final JwtMerchantFilter jwtMerchantFilter;
+
     @Bean
     public SecurityFilterChain jwtChain(HttpSecurity httpSecurity){
         return httpSecurity
@@ -39,6 +44,7 @@ public class WebSecurityConfig {
                             .requestMatchers("/api/v1/auth/login","/api/v1/auth/signup").permitAll()
                             .anyRequest().authenticated();
                 })
+                .addFilterBefore(jwtMerchantFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
