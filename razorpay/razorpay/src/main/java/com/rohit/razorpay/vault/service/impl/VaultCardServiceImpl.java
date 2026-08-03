@@ -62,6 +62,7 @@ public class VaultCardServiceImpl implements VaultCardService {
                 .encryptedDek(encryptedDek)
                 .encryptedPan(encryptedPan)
                 .cardHolderName(request.cardHolderName())
+                .lastFour(lastFour)
                 .build());
 
         log.info("Vault card saved..");

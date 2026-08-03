@@ -21,7 +21,7 @@ public class VaultCardEntity extends BaseEntity {
     private UUID id;
 
     @Column(nullable = false)
-    private byte[] encryptedPan;
+    private byte[] encryptedPan;//
 
     @Column(nullable = false)
     private byte[] encryptedDek; //string used to encrypt the pan encrypted by master key
@@ -31,16 +31,16 @@ public class VaultCardEntity extends BaseEntity {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private CardBrand brand;
+    private CardBrand brand; //
 
     @Column(nullable = false,length = 6)
     private String bin; // first 6 digits of a card - bank identification number
 
     @Column(nullable = false)
-    private String expiryMonth;
+    private String expiryMonth;//
 
     @Column(nullable = false)
-    private String expiryYear;
+    private String expiryYear;//
 
     @Column(nullable = false)
     private String cardHolderName;
