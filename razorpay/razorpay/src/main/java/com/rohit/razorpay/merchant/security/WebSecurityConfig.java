@@ -3,6 +3,7 @@ package com.rohit.razorpay.merchant.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -31,8 +32,10 @@ public class WebSecurityConfig {
     };
 
     private final JwtMerchantFilter jwtMerchantFilter;
+    private final ApiKeyAuthenticationFilter apiKeyAuthenticationFilter;
 
     @Bean
+    @Order(1)
     public SecurityFilterChain jwtChain(HttpSecurity httpSecurity){
         return httpSecurity
                 .securityMatcher(JWT_ROUTES)
@@ -45,6 +48,22 @@ public class WebSecurityConfig {
                             .anyRequest().authenticated();
                 })
                 .addFilterBefore(jwtMerchantFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
+    }
+
+    @Bean
+    @Order(2)
+    public SecurityFilterChain apiKeyChain(HttpSecurity httpSecurity){
+        return httpSecurity
+                .securityMatcher(API_KEY_ROUTES)
+                .csrf((csrfConf)->csrfConf.disable())
+                .sessionManagement((session)->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .formLogin((form)->form.disable())
+                .authorizeHttpRequests(auth->{
+                    auth
+                            .anyRequest().authenticated();
+                })
+                .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 

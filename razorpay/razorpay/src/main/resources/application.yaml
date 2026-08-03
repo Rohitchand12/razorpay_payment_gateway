@@ -11,7 +11,7 @@ spring:
     show-sql: true
 
 vault:
-  master-key: jkfbhguefbjfbfugewkfbsjfbsjdfgewufwebkwejb3e
+  master-key: QmFzZTY0U3RyaW5nRXhhbXBsZTEyMzQ1Ng==
 
 payment:
   simulator:

@@ -14,6 +14,7 @@ import com.rohit.razorpay.merchant.repository.MerchantRepository;
 import com.rohit.razorpay.merchant.service.ApiKeyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
     private final ApiKeyRepository apiKeyRepository;
     private final MerchantRepository merchantRepository;
     private final ApiKeyMapper apiKeyMapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -45,7 +47,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
         ApiKeyEntity apiKey = ApiKeyEntity.builder()
                 .merchant(merchant)
                 .keyId(key)
-                .keySecretHash(keySecret)
+                .keySecretHash(passwordEncoder.encode(keySecret))
                 .environment(Environment.valueOf(request.environment()))
                 .build();
 

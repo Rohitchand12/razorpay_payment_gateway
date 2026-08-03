@@ -15,5 +15,5 @@ import java.util.UUID;
 @RequestScope(proxyMode = ScopedProxyMode.TARGET_CLASS)
 public class MerchantContext {
     private UUID merchantId;
-    private UUID keyId;
+    private String keyId;
 }

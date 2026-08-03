@@ -45,12 +45,15 @@ public class VaultCardServiceImpl implements VaultCardService {
         CardBrand cardBrand = detectBrand(request.pan());
         //the pan is encrypted using a dek
         byte[] dek = KeyGenerators.secureRandom(32).generateKey();
+        log.info("Encrypting pan...");
         byte[] encryptedPan = VaultEncryptionConfig
                 .panEncryptor(dek)
                 .encrypt(request.pan().getBytes(StandardCharsets.UTF_8));
         //we store the dek also in our database by encrypting dek using a master key
+        log.info("Encrypting dek...");
         byte[] encryptedDek = dekEncryptor.encrypt(dek);
 
+        log.info("dek encrypted, now saving vault card..");
         VaultCardEntity vaultCard = vaultCardRepository.save(VaultCardEntity.builder()
                 .brand(cardBrand)
                 .bin(bin)
@@ -61,6 +64,8 @@ public class VaultCardServiceImpl implements VaultCardService {
                 .cardHolderName(request.cardHolderName())
                 .build());
 
+        log.info("Vault card saved..");
+
         String token = "tok_"+ RandomizerUtil.randomBase64(32);
 
         CardTokenEntity cardToken = cardTokenRepository.save(CardTokenEntity.builder()
@@ -70,7 +75,7 @@ public class VaultCardServiceImpl implements VaultCardService {
                 .customerId(request.customerId())
                 .build());
 
-        return null;
+        return new TokenizeResponseDto(token,lastFour,cardBrand, request.expiryYear(), request.expiryMonth());
     }
 
     @Override

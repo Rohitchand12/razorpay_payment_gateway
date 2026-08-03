@@ -1,5 +1,6 @@
 package com.rohit.razorpay.payment.controller;
 
+import com.rohit.razorpay.merchant.security.MerchantContext;
 import com.rohit.razorpay.payment.dto.request.OrderCreateRequestDto;
 import com.rohit.razorpay.payment.dto.response.OrderResponseDto;
 import com.rohit.razorpay.payment.service.impl.OrderServiceImpl;
@@ -16,18 +17,17 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class OrderController {
     private final OrderServiceImpl orderService;
-
-    UUID merchantId = UUID.fromString("accca886-9b0a-4a05-910f-a9b8f475335f");
+    private final MerchantContext merchantContext;
 
     @PostMapping()
     public ResponseEntity<OrderResponseDto> create(@RequestBody @Valid  OrderCreateRequestDto request){
-        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.create(merchantId,request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.create(merchantContext.getMerchantId(),request));
     }
 
     //get by id
     @GetMapping("/{id}")
     public ResponseEntity<OrderResponseDto> getById(@PathVariable UUID id){
-        return ResponseEntity.ok(orderService.getById(merchantId,id));
+        return ResponseEntity.ok(orderService.getById(merchantContext.getMerchantId(),id));
     }
 
     //cancel order
