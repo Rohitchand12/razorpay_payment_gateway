@@ -2,6 +2,8 @@ package com.rohit.razorpay.merchant.security;
 
 
 import com.rohit.razorpay.common.exceptions.ResourceNotFoundException;
+import com.rohit.razorpay.merchant.cache.ApiKeyCache;
+import com.rohit.razorpay.merchant.cache.ApiKeyCacheEntry;
 import com.rohit.razorpay.merchant.entity.ApiKeyEntity;
 import com.rohit.razorpay.merchant.repository.ApiKeyRepository;
 import jakarta.servlet.FilterChain;
@@ -36,6 +38,7 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
     private final ApiKeyRepository apiKeyRepository;
     private final MerchantContext merchantContext;
     private final HandlerExceptionResolver handlerExceptionResolver;
+    private final ApiKeyCache apiKeyCache;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -60,11 +63,14 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
             String keySecret = decoded[1];
 
 
-            ApiKeyEntity apiKey = apiKeyRepository.findByKeyId(keyId)
-                    .orElseThrow(()-> new ResourceNotFoundException("ApiKey",keyId));
+            ApiKeyCacheEntry apiKey = apiKeyCache.get(keyId)
+                    .orElseGet(()->loadAndCache(keyId));
+
+//            ApiKeyEntity apiKey = apiKeyRepository.findByKeyId(keyId)
+//                    .orElseThrow(()-> new ResourceNotFoundException("ApiKey",keyId));
 
             //check if the api key is disabled or is not valid
-            if(!apiKey.getEnabled() || !isValidSecret(apiKey,keySecret)){
+            if(apiKey == null || !apiKey.enabled() || !isValidSecret(apiKey,keySecret)){
                 throw new BadRequestException("Disabled or invalid/expired api key");
             }
 
@@ -74,8 +80,8 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
             );
 
             SecurityContextHolder.getContext().setAuthentication(auth);
-            merchantContext.setMerchantId(apiKey.getMerchant().getId());
-            merchantContext.setKeyId(apiKey.getKeyId());
+            merchantContext.setMerchantId(apiKey.merchantId());
+            merchantContext.setKeyId(apiKey.keyId());
 
             filterChain.doFilter(request,response);
         }catch (Exception e){
@@ -83,12 +89,28 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    private boolean isValidSecret(ApiKeyEntity apiKey, String rawSecret){
-        boolean matches = BCRYPT.matches(rawSecret,apiKey.getKeySecretHash());
+    private ApiKeyCacheEntry loadAndCache(String keyId){
+        ApiKeyEntity apiKey = apiKeyRepository.findByKeyId(keyId).orElse(null);
+        if(apiKey == null) return null;
+        ApiKeyCacheEntry apiKeyCacheEntry = new ApiKeyCacheEntry(
+                keyId,
+                apiKey.getKeySecretHash(),
+                apiKey.getPrevKeySecretHash(),
+                apiKey.getGracePeriodExpiresAt(),
+                apiKey.getMerchant().getId(),
+                apiKey.getEnvironment(),
+                apiKey.getEnabled()
+        );
+        apiKeyCache.put(keyId,apiKeyCacheEntry);
+        return apiKeyCacheEntry;
+    }
+
+    private boolean isValidSecret(ApiKeyCacheEntry apiKey, String rawSecret){
+        boolean matches = BCRYPT.matches(rawSecret,apiKey.keySecretHash());
         if(matches) return true;
-        return apiKey.getGracePeriodExpiresAt() != null
-                && apiKey.getPrevKeySecretHash() != null
-                && LocalDateTime.now().isBefore(apiKey.getGracePeriodExpiresAt());
+        return apiKey.gracePeriodExpiresAt() != null
+                && apiKey.previousKeySecretHash()!= null
+                && LocalDateTime.now().isBefore(apiKey.gracePeriodExpiresAt());
     }
 
     private String[] decode(String header){

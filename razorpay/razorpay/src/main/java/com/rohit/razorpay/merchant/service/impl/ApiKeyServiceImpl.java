@@ -3,6 +3,7 @@ package com.rohit.razorpay.merchant.service.impl;
 import com.rohit.razorpay.common.enums.Environment;
 import com.rohit.razorpay.common.exceptions.ResourceNotFoundException;
 import com.rohit.razorpay.common.utils.RandomizerUtil;
+import com.rohit.razorpay.merchant.cache.ApiKeyCache;
 import com.rohit.razorpay.merchant.mapper.ApiKeyMapper;
 import com.rohit.razorpay.merchant.dto.request.ApiKeyRequestDto;
 import com.rohit.razorpay.merchant.dto.response.ApiKeyCreateResponseDto;
@@ -32,6 +33,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
     private final MerchantRepository merchantRepository;
     private final ApiKeyMapper apiKeyMapper;
     private final PasswordEncoder passwordEncoder;
+    private final ApiKeyCache apiKeyCache;
 
     @Override
     @Transactional
@@ -77,6 +79,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
                 .filter((key)->key.getMerchant().getId().equals(merchantId))
                 .orElseThrow(()->new ResourceNotFoundException("ApiKey",keyId));
         apiKey.setEnabled(false);
+        apiKeyCache.evict(apiKey.getKeyId());
         apiKeyRepository.save(apiKey); //can avoid this is added @transactional  i.e. sees the dirty and saves
     }
 
@@ -96,6 +99,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
         apiKey.setGracePeriodExpiresAt(LocalDateTime.now().plusHours(24));
 
         apiKey = apiKeyRepository.save(apiKey);
+        apiKeyCache.evict(apiKey.getKeyId());
         return new ApiKeyCreateResponseDto(
                  apiKey.getId()
                 ,apiKey.getKeyId()
