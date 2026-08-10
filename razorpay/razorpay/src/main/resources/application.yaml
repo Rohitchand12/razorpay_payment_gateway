@@ -37,3 +37,25 @@ payment:
         success-rate: 80
 jwt:
   secret_key: dev_hiuhewfinciwrughncwegcrb32y428374cbwerchbwnecer
+
+app:
+  rate-limit:
+    method: fixed
+    use-case:
+      api-key:
+        requests-per-minute: 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

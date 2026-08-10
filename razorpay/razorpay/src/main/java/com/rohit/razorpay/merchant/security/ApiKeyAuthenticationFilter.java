@@ -1,7 +1,10 @@
 package com.rohit.razorpay.merchant.security;
 
 
+import com.rohit.razorpay.common.exceptions.RateLimitException;
 import com.rohit.razorpay.common.exceptions.ResourceNotFoundException;
+import com.rohit.razorpay.common.ratelimit.FixedWindowRateLimiter;
+import com.rohit.razorpay.common.ratelimit.RateLimitResult;
 import com.rohit.razorpay.merchant.cache.ApiKeyCache;
 import com.rohit.razorpay.merchant.cache.ApiKeyCacheEntry;
 import com.rohit.razorpay.merchant.entity.ApiKeyEntity;
@@ -13,6 +16,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -39,6 +43,10 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
     private final MerchantContext merchantContext;
     private final HandlerExceptionResolver handlerExceptionResolver;
     private final ApiKeyCache apiKeyCache;
+    private final FixedWindowRateLimiter rateLimiter;
+
+    @Value("${app.rate-limit.use-case.api-key.requests-per-minute}")
+    private Integer requestsPerMinute;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -66,12 +74,23 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
             ApiKeyCacheEntry apiKey = apiKeyCache.get(keyId)
                     .orElseGet(()->loadAndCache(keyId));
 
-//            ApiKeyEntity apiKey = apiKeyRepository.findByKeyId(keyId)
-//                    .orElseThrow(()-> new ResourceNotFoundException("ApiKey",keyId));
-
             //check if the api key is disabled or is not valid
             if(apiKey == null || !apiKey.enabled() || !isValidSecret(apiKey,keySecret)){
                 throw new BadRequestException("Disabled or invalid/expired api key");
+            }
+
+            RateLimitResult rateLimitResult = rateLimiter.check(
+                    "apikey:"+keyId
+                    ,requestsPerMinute
+                    ,60
+            );
+
+
+            if(!rateLimitResult.isAllowed()){
+                throw new RateLimitException(
+                        "Too many requests"
+                        ,rateLimitResult.retryAfterSeconds()
+                );
             }
 
             var auth = new UsernamePasswordAuthenticationToken(keyId,
