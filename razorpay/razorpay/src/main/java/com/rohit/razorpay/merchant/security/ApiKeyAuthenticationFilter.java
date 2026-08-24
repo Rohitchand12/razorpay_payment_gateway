@@ -74,6 +74,8 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
             ApiKeyCacheEntry apiKey = apiKeyCache.get(keyId)
                     .orElseGet(()->loadAndCache(keyId));
 
+            log.info("Api key = {}", apiKey.keyId());
+
             //check if the api key is disabled or is not valid
             if(apiKey == null || !apiKey.enabled() || !isValidSecret(apiKey,keySecret)){
                 throw new BadRequestException("Disabled or invalid/expired api key");
@@ -102,8 +104,10 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
             merchantContext.setMerchantId(apiKey.merchantId());
             merchantContext.setKeyId(apiKey.keyId());
 
+            log.info("Merchant context id {}",merchantContext.getMerchantId());
             filterChain.doFilter(request,response);
         }catch (Exception e){
+            log.info("Exception in api key filter chain.");
             handlerExceptionResolver.resolveException(request,response,null,e);
         }
     }
