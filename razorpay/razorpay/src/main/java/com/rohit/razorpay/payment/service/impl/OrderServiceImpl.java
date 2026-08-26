@@ -4,6 +4,8 @@ import com.rohit.razorpay.common.enums.OrderStatus;
 import com.rohit.razorpay.common.exceptions.BusinessRuleViolationException;
 import com.rohit.razorpay.common.exceptions.DuplicateResourceException;
 import com.rohit.razorpay.common.exceptions.ResourceNotFoundException;
+import com.rohit.razorpay.merchant.repository.CustomerRepository;
+import com.rohit.razorpay.merchant.service.CustomerService;
 import com.rohit.razorpay.payment.dto.request.OrderCreateRequestDto;
 import com.rohit.razorpay.payment.dto.response.OrderResponseDto;
 import com.rohit.razorpay.payment.dto.response.PaymentResponseDto;
@@ -31,6 +33,8 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
+    private final CustomerService customerService;
+
     private final PaymentMapper paymentMapper;
     private final OrderMapper orderMapper;
 
@@ -45,11 +49,23 @@ public class OrderServiceImpl implements OrderService {
                     , "Duplicate order found with receipt "+ request.receipt()
             );
         }
+
+        UUID customerId = null;
+        if(request.customer() != null){
+            customerId = customerService.findOrCreate(
+                    merchantId,
+                    request.customer().email(),
+                    request.customer().name(),
+                    request.customer().phone()
+            );
+        }
+
         OrderRecordEntity newOrder = OrderRecordEntity.builder()
                 .amount(request.amount())
                 .receipt(request.receipt())
                 .notes(request.notes())
                 .status(OrderStatus.CREATED)
+                .customerId(customerId)
                 .expiresAt(
                         request.expiresAt() != null
                                 ? request.expiresAt()

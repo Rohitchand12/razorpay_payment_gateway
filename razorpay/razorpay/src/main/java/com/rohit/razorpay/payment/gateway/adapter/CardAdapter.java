@@ -33,6 +33,6 @@ public class CardAdapter implements PaymentGatewayAdapter {
 
     @Override
     public PaymentResult capture(UUID paymentId) {
-        return null;
+        return new PaymentResult.success("CARD_REF");
     }
 }

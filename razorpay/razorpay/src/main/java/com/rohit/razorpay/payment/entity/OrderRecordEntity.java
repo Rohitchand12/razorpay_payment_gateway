@@ -29,6 +29,9 @@ public class OrderRecordEntity extends BaseEntity {
     @Column(name="merchant_id", nullable = false)
     private UUID merchantId; // no relationship here because Payment is completely different service
 
+    @Column(name="customer_id")
+    private UUID customerId;
+
     @Column(length = 100)
     private String receipt;
 

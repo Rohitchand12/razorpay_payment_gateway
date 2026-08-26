@@ -107,7 +107,7 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
             log.info("Merchant context id {}",merchantContext.getMerchantId());
             filterChain.doFilter(request,response);
         }catch (Exception e){
-            log.info("Exception in api key filter chain.");
+            log.info("Exception in api key filter chain, {}",e.toString());
             handlerExceptionResolver.resolveException(request,response,null,e);
         }
     }

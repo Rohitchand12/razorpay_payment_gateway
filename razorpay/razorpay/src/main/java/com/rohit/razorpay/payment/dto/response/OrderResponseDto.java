@@ -11,6 +11,7 @@ public record OrderResponseDto(
         UUID id,
         UUID merchantId,
         Money amount,
+        UUID customerId,
         OrderStatus status,
         Integer attempts,
         Map<String,Object> notes,
