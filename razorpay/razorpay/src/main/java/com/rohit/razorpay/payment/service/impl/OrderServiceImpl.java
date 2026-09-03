@@ -1,11 +1,13 @@
 package com.rohit.razorpay.payment.service.impl;
 
+import com.rohit.razorpay.common.enums.AggregateType;
 import com.rohit.razorpay.common.enums.OrderStatus;
 import com.rohit.razorpay.common.exceptions.BusinessRuleViolationException;
 import com.rohit.razorpay.common.exceptions.DuplicateResourceException;
 import com.rohit.razorpay.common.exceptions.ResourceNotFoundException;
 import com.rohit.razorpay.merchant.repository.CustomerRepository;
 import com.rohit.razorpay.merchant.service.CustomerService;
+import com.rohit.razorpay.payment.Outbox.OutboxEventPublisher;
 import com.rohit.razorpay.payment.dto.request.OrderCreateRequestDto;
 import com.rohit.razorpay.payment.dto.response.OrderResponseDto;
 import com.rohit.razorpay.payment.dto.response.PaymentResponseDto;
@@ -24,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -34,6 +37,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
     private final CustomerService customerService;
+    private final OutboxEventPublisher outboxEventPublisher;
 
     private final PaymentMapper paymentMapper;
     private final OrderMapper orderMapper;
@@ -60,7 +64,7 @@ public class OrderServiceImpl implements OrderService {
             );
         }
 
-        OrderRecordEntity newOrder = OrderRecordEntity.builder()
+        OrderRecordEntity order = OrderRecordEntity.builder()
                 .amount(request.amount())
                 .receipt(request.receipt())
                 .notes(request.notes())
@@ -73,8 +77,20 @@ public class OrderServiceImpl implements OrderService {
                 )
                 .merchantId(merchantId)//TODO: replace this with UUID coming from api key when merchant makes a call.
                 .build();
-        newOrder = orderRepository.save(newOrder);
-        return orderMapper.toOrderResponseDto(newOrder);
+        order = orderRepository.save(order);
+
+        //Create an outbox event for the order created
+        outboxEventPublisher.publish(AggregateType.ORDER, order.getId(),"ORDER_CREATED",
+            Map.of(
+                    "orderId" ,order.getId().toString(),
+                    "merchantId",merchantId.toString(),
+                    "orderStatus", order.getStatus().name(),
+                    "amountUnits",order.getAmount().getAmountUnits(),
+                    "amountCurrency",order.getAmount().getCurrency()
+            )
+        );
+
+        return orderMapper.toOrderResponseDto(order);
     }
 
     @Override
@@ -99,6 +115,18 @@ public class OrderServiceImpl implements OrderService {
         }
         order.setStatus(OrderStatus.CANCELLED);
         order = orderRepository.save(order);
+
+        //Create an outbox event for the order cancellation
+        outboxEventPublisher.publish(AggregateType.ORDER, order.getId(),"ORDER_CANCELLED",
+                Map.of(
+                        "orderId" ,order.getId().toString(),
+                        "merchantId",merchantId.toString(),
+                        "orderStatus", order.getStatus().name(),
+                        "amountUnits",order.getAmount().getAmountUnits(),
+                        "amountCurrency",order.getAmount().getCurrency()
+                )
+        );
+
         return orderMapper.toOrderResponseDto(order);
     }
 

@@ -1,10 +1,12 @@
 package com.rohit.razorpay.payment.service.impl;
 
+import com.rohit.razorpay.common.enums.AggregateType;
 import com.rohit.razorpay.common.enums.OrderStatus;
 import com.rohit.razorpay.common.enums.PaymentEvent;
 import com.rohit.razorpay.common.enums.PaymentStatus;
 import com.rohit.razorpay.common.exceptions.BusinessRuleViolationException;
 import com.rohit.razorpay.common.exceptions.ResourceNotFoundException;
+import com.rohit.razorpay.payment.Outbox.OutboxEventPublisher;
 import com.rohit.razorpay.payment.dto.request.PaymentInitRequestDto;
 import com.rohit.razorpay.payment.dto.response.PaymentResponseDto;
 import com.rohit.razorpay.payment.entity.OrderRecordEntity;
@@ -25,6 +27,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -37,6 +40,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentMapper paymentMapper;
     private final PaymentTransitionService paymentTransitionService;
+    private final OutboxEventPublisher outboxEventPublisher;
 
     @Override
     @Transactional
@@ -99,7 +103,19 @@ public class PaymentServiceImpl implements PaymentService {
         }
         paymentEntity = paymentRepository.save(paymentEntity);
         orderRepository.save(order);
-        //send a Kafka event
+
+        //Create an outbox event for the payment cancellation
+        outboxEventPublisher.publish(AggregateType.PAYMENT, paymentEntity.getId(),"PAYMENT_CREATED",
+                Map.of(
+                        "orderId" ,order.getId().toString(),
+                        "paymentId", paymentEntity.getId().toString(),
+                        "merchantId",merchantId.toString(),
+                        "paymentStatus", paymentEntity.getStatus().name(),
+                        "amountUnits",order.getAmount().getAmountUnits(),
+                        "amountCurrency",order.getAmount().getCurrency(),
+                        "paymentMethod",paymentEntity.getMethod().name()
+                )
+        );
         return paymentMapper.toPaymentResponseDto(paymentEntity);
     }
 
@@ -109,23 +125,35 @@ public class PaymentServiceImpl implements PaymentService {
 //        PaymentEntity payment = paymentRepository.findByIdAndMerchantId(paymentId,merchantId)
 //                .orElseThrow(()->new ResourceNotFoundException("payment",paymentId));
 //
-        PaymentEntity payment = paymentRepository.findByIdAndMerchantIdForUpdate(paymentId,merchantId)
+        PaymentEntity paymentEntity = paymentRepository.findByIdAndMerchantIdForUpdate(paymentId,merchantId)
                 .orElseThrow(()->new ResourceNotFoundException("payment",paymentId));
 
-        paymentTransitionService.apply(payment,PaymentEvent.CAPTURE_REQUEST);
+        paymentTransitionService.apply(paymentEntity,PaymentEvent.CAPTURE_REQUEST);
 
-        PaymentResult paymentResult = paymentGatewayRouter.capture(payment.getMethod(),paymentId);
+        PaymentResult paymentResult = paymentGatewayRouter.capture(paymentEntity.getMethod(),paymentId);
         if(paymentResult instanceof  PaymentResult.success success){
-            paymentTransitionService.apply(payment,PaymentEvent.CAPTURE_SUCCESS);
-            payment.setCapturedAt(LocalDateTime.now());
+            paymentTransitionService.apply(paymentEntity,PaymentEvent.CAPTURE_SUCCESS);
+            paymentEntity.setCapturedAt(LocalDateTime.now());
         }else if (paymentResult instanceof  PaymentResult.failure failure) {
-            paymentTransitionService.apply(payment,PaymentEvent.CAPTURE_FAIL);
-            payment.setErrorCode(failure.errCode());
-            payment.setErrorDescription(failure.errorDescription());
+            paymentTransitionService.apply(paymentEntity,PaymentEvent.CAPTURE_FAIL);
+            paymentEntity.setErrorCode(failure.errCode());
+            paymentEntity.setErrorDescription(failure.errorDescription());
         }
-        payment = paymentRepository.save(payment);
-        //send a Kafka event
-        return paymentMapper.toPaymentResponseDto(payment);
+        paymentEntity = paymentRepository.save(paymentEntity);
+
+        //Create an outbox event for the payment status change
+        outboxEventPublisher.publish(AggregateType.PAYMENT, paymentEntity.getId(),"PAYMENT_STATUS_CHANGED",
+                Map.of(
+                        "orderId" ,paymentEntity.getId().toString(),
+                        "paymentId", paymentEntity.getId().toString(),
+                        "merchantId",merchantId.toString(),
+                        "paymentStatus", paymentEntity.getStatus().name(),
+                        "amountUnits",paymentEntity.getAmount().getAmountUnits(),
+                        "amountCurrency",paymentEntity.getAmount().getCurrency(),
+                        "paymentMethod",paymentEntity.getMethod().name()
+                )
+        );
+        return paymentMapper.toPaymentResponseDto(paymentEntity);
     }
 
     @Override
@@ -134,42 +162,55 @@ public class PaymentServiceImpl implements PaymentService {
 //        PaymentEntity payment = paymentRepository.findById(paymentId)
 //                .orElseThrow(()->new ResourceNotFoundException("Payment",paymentId));
 
-        PaymentEntity payment = paymentRepository.findByIdForUpdate(paymentId)
+        PaymentEntity paymentEntity = paymentRepository.findByIdForUpdate(paymentId)
                 .orElseThrow(()->new ResourceNotFoundException("Payment",paymentId));
-        if(payment.getStatus() != PaymentStatus.AUTHORIZING){
-            log.warn("Payment is not in authorizing state, payment id : {}, status : {}",paymentId,payment.getStatus());
+        if(paymentEntity.getStatus() != PaymentStatus.AUTHORIZING){
+            log.warn("Payment is not in authorizing state, payment id : {}, status : {}",paymentId,paymentEntity.getStatus());
             return;
         }
-        OrderRecordEntity orderRecord = payment.getOrder();
+        OrderRecordEntity orderRecord = paymentEntity.getOrder();
         if(approve){
-            paymentTransitionService.apply(payment,PaymentEvent.AUTHORIZE_SUCCESS);
-            payment.setBankReference(bankRef);
-            payment.setAuthorizedAt(LocalDateTime.now());
+            paymentTransitionService.apply(paymentEntity,PaymentEvent.AUTHORIZE_SUCCESS);
+            paymentEntity.setBankReference(bankRef);
+            paymentEntity.setAuthorizedAt(LocalDateTime.now());
 
             //Auto capture
-            paymentTransitionService.apply(payment,PaymentEvent.CAPTURE_REQUEST);
-            PaymentResult captureResult =  paymentGatewayRouter.capture(payment.getMethod(),paymentId);
+            paymentTransitionService.apply(paymentEntity,PaymentEvent.CAPTURE_REQUEST);
+            PaymentResult captureResult =  paymentGatewayRouter.capture(paymentEntity.getMethod(),paymentId);
             switch (captureResult){
                 case PaymentResult.success success -> {
-                    paymentTransitionService.apply(payment,PaymentEvent.CAPTURE_SUCCESS);
-                    payment.setCapturedAt(LocalDateTime.now());
+                    paymentTransitionService.apply(paymentEntity,PaymentEvent.CAPTURE_SUCCESS);
+                    paymentEntity.setCapturedAt(LocalDateTime.now());
                     orderRecord.setStatus(OrderStatus.PAID);
                 }
                 case PaymentResult.failure failure->{
-                    paymentTransitionService.apply(payment,PaymentEvent.CAPTURE_FAIL);
-                    payment.setErrorCode(failure.errCode());
-                    payment.setErrorDescription(failure.errorDescription());
+                    paymentTransitionService.apply(paymentEntity,PaymentEvent.CAPTURE_FAIL);
+                    paymentEntity.setErrorCode(failure.errCode());
+                    paymentEntity.setErrorDescription(failure.errorDescription());
                 }
                 case PaymentResult.pending pending ->{
                     //NO PENDING STATE due to synchronous nature, we will immediately get success or fail in capture
                 }
             }
         }else{
-            paymentTransitionService.apply(payment,PaymentEvent.AUTHORIZE_FAIL);
-            payment.setErrorDescription(errorDescription);
-            payment.setErrorCode(errorCode);
+            paymentTransitionService.apply(paymentEntity,PaymentEvent.AUTHORIZE_FAIL);
+            paymentEntity.setErrorDescription(errorDescription);
+            paymentEntity.setErrorCode(errorCode);
         }
-        paymentRepository.save(payment);
+        paymentRepository.save(paymentEntity);
         orderRepository.save(orderRecord);
+
+        //Create an outbox event for the payment status change
+        outboxEventPublisher.publish(AggregateType.PAYMENT, paymentEntity.getId(),"PAYMENT_STATUS_CHANGED",
+                Map.of(
+                        "orderId" ,paymentEntity.getId().toString(),
+                        "paymentId", paymentEntity.getId().toString(),
+                        "merchantId",paymentEntity.getMerchantId().toString(),
+                        "paymentStatus", paymentEntity.getStatus().name(),
+                        "amountUnits",paymentEntity.getAmount().getAmountUnits(),
+                        "amountCurrency",paymentEntity.getAmount().getCurrency(),
+                        "paymentMethod",paymentEntity.getMethod().name()
+                )
+        );
     }
 }
