@@ -2,6 +2,7 @@ package com.rohit.razorpay.operations.entity;
 
 import com.rohit.razorpay.common.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -10,6 +11,11 @@ import java.util.Map;
 import java.util.UUID;
 
 @Entity
+@Builder
+@Getter
+@Setter
+@RequiredArgsConstructor
+@AllArgsConstructor
 @Table(name = "dlq_event")
 public class DlqEventEntity extends BaseEntity {
     @Id

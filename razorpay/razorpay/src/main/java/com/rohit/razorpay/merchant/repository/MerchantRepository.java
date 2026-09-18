@@ -9,4 +9,5 @@ import java.util.UUID;
 @Repository
 public interface MerchantRepository extends JpaRepository<MerchantEntity,UUID> {
     boolean existsByEmail(String email);
+
 }

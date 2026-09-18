@@ -28,11 +28,20 @@ public class WebhookConfigEntity extends BaseEntity {
     @Column(length = 500,nullable = false)
     private String targetUrl;
 
-    private String eventTypeFilter; //comma seperated events
+    private String eventTypes; //comma separated events
 
     private Boolean enabled;
 
     private String webhookSecret;
 
-
+    public boolean isSubscribedTo(String event){
+        if(event == null || event.isBlank()) return true; //treat it as ALL
+        for(String e : eventTypes.split(",")){
+            String trimmed = e.trim();
+            if(trimmed.equalsIgnoreCase("ALL") || trimmed.equalsIgnoreCase(event)){
+                return true;
+            }
+        }
+        return false;
+    }
 }

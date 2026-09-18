@@ -3,10 +3,10 @@ spring:
     name: razorpay
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5433/razorpayDB}
-#    username: ${DB_USER:postgres}
-    username: ${DB_USER:anuj}
-#    password: ${DB_PASSWORD:Programmer@0520}
-    password: ${DB_PASSWORD:password}
+    username: ${DB_USER:postgres}
+#    username: ${DB_USER:anuj}
+    password: ${DB_PASSWORD:Programmer@0520}
+#    password: ${DB_PASSWORD:password}
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -39,7 +39,9 @@ spring:
         spring.json.trusted.packages: "com.rohit.razorpay.*"
         spring.json.use.type.headers: false
         spring.json.value.default.type: java.util.LinkedHashMap
-
+  thread:
+    virtual:
+      enabled: true
 vault:
   master-key: NqcfbJG1zkOfBsNF/wPmlLA7aaOvh9RCHTYYgY/9A2Q=
 
@@ -75,7 +77,10 @@ app:
     use-case:
       api-key:
         requests-per-minute: 2
-
+  webhook:
+    delivery:
+      redis-key: "webhook-retry"
+      poll-batch-size: 100
 
 
 
