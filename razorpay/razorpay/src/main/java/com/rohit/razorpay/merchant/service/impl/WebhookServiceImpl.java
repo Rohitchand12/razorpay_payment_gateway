@@ -99,7 +99,8 @@ public class WebhookServiceImpl implements WebhookService, MerchantWebhookApi {
                 .stream()
                 .filter((WebhookConfigEntity webhook)->webhook.isSubscribedTo(event))
                 .map((WebhookConfigEntity webhook)-> {
-                    byte[] decryptedSecretBytes = bytesEncryptor.decrypt(webhook.getWebhookSecret().getBytes(StandardCharsets.UTF_8));
+                    byte[] cipherBytes = Base64.getDecoder().decode(webhook.getWebhookSecret());
+                    byte[] decryptedSecretBytes = bytesEncryptor.decrypt(cipherBytes);
                     return new WebhookTargetDto(webhook.getId()
                             ,webhook.getTargetUrl(), new String(decryptedSecretBytes,StandardCharsets.UTF_8));
                 })

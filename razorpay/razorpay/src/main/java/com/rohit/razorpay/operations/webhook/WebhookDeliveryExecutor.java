@@ -44,6 +44,8 @@ public class WebhookDeliveryExecutor {
             );
 
     void deliver(UUID eventId){
+        log.info("Webhook event delivery started : {}", eventId);
+
         Optional<WebhookEventEntity> webhookEvent = webhookEventRepository.findById(eventId);
         if(webhookEvent.isEmpty()){
             log.warn("No webhook event found for this id: {}",eventId);
@@ -74,8 +76,10 @@ public class WebhookDeliveryExecutor {
                 event.setStatus(WebhookEventStatus.DELIVERED);
                 event.setDeliveredAt(LocalDateTime.now());
                 webhookEventRepository.save(event);
+                log.info("Webhook event delivery successful : {}", eventId);
                 return;
             }
+            log.info("Webhook event delivery re attempting : {}", eventId);
             handleAttemptFailed(event, "HTTP"+statusCode);
         }catch(RestClientException e){
             event.setLastResponseBody(e.getMessage());
@@ -98,6 +102,7 @@ public class WebhookDeliveryExecutor {
         event.setStatus(WebhookEventStatus.FAILED);
         event.setNextRetryAt(nextRetryAt);
         webhookEventRepository.save(event);
+        log.info("Webhook event delivery retry after {} : {}", nextRetryAt,event.getId());
         retryQueue.enqueue(event.getId(),nextRetryAt);
     }
 

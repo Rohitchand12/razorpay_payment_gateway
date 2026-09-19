@@ -24,7 +24,8 @@ public class WebSecurityConfig {
             "/api/v1/auth/**",
             "/api/v1/merchant/**",
             "/api/v1/admin/**",
-            "/api/v1/actuator/**"
+            "/api/v1/actuator/**",
+            "/webhook/**"
     };
     private static final String[] API_KEY_ROUTES = {
             "/api/v1/orders/**",
@@ -46,7 +47,7 @@ public class WebSecurityConfig {
                 .formLogin((form)->form.disable())
                 .authorizeHttpRequests(auth->{
                     auth
-                            .requestMatchers("/api/v1/auth/login","/api/v1/auth/signup").permitAll()
+                            .requestMatchers("/api/v1/auth/login","/api/v1/auth/signup","/webhook/**").permitAll()
                             .anyRequest().authenticated();
                 })
                 .addFilterBefore(jwtMerchantFilter, UsernamePasswordAuthenticationFilter.class)

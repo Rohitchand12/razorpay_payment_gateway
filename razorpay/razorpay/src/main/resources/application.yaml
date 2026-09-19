@@ -17,6 +17,8 @@ spring:
       ddl-auto: update
     show-sql: true
   kafka:
+    listener:
+      ack-mode: manual
     bootstrap-servers: ${KAFKA_BROKERS:localhost:29092}
 
     producer:

@@ -82,6 +82,7 @@ public class WebhookKafkaConsumer {
                 webhookEvent = webhookEventRepository.save(webhookEvent);
                 //need to enqueue the event id to redis queue.
                 webhookRetryQueue.enqueue(webhookEvent.getId(),webhookEvent.getNextRetryAt());
+                log.info("Webhook event saved and enqueued to redis : {}", webhookEvent.getId());
             }
             ack.acknowledge();
         }catch (DataAccessException | CannotCreateTransactionException dbDown){
